@@ -330,6 +330,16 @@ const wss = new WebSocketServer({
 // Make WebSocket server available to routes
 app.locals.wss = wss;
 
+// Ping all clients every 25 seconds to keep connections alive through
+// mobile networks and NAT that close idle TCP connections.
+const wsPingInterval = setInterval(() => {
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.ping();
+        }
+    });
+}, 25000);
+
 app.use(cors({ exposedHeaders: ['X-Refreshed-Token'] }));
 app.use(express.json({
     limit: '50mb',
