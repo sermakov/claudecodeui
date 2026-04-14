@@ -27,3 +27,7 @@ try {
 if (!process.env.DATABASE_PATH) {
   process.env.DATABASE_PATH = path.join(os.homedir(), '.cloudcli', 'auth.db');
 }
+
+// Allow spawning Claude Code as a child process even when running inside a Claude Code session.
+// Without this, the SDK refuses to start nested sessions.
+delete process.env.CLAUDECODE;
