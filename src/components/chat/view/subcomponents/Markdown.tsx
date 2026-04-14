@@ -8,6 +8,14 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTranslation } from 'react-i18next';
 import { normalizeInlineCodeFences } from '../../utils/chatFormatting';
 import { copyTextToClipboard } from '../../../../utils/clipboard';
+import { FileDownloadButton } from '../../tools/components/FileDownloadButton';
+
+// Matches Unix absolute paths and Windows absolute paths that have a file extension
+const FILE_PATH_RE = /^(?:[A-Za-z]:[/\\]|\/)[^\n"'`<>|*?]+\.[A-Za-z0-9]{1,10}$/;
+
+function looksLikeFilePath(text: string): boolean {
+  return FILE_PATH_RE.test(text.trim());
+}
 
 type MarkdownProps = {
   children: React.ReactNode;
@@ -116,8 +124,31 @@ const CodeBlock = ({ node, inline, className, children, ...props }: CodeBlockPro
   );
 };
 
+const InlineCode = ({ node, inline, className, children, ...props }: CodeBlockProps) => {
+  const raw = Array.isArray(children) ? children.join('') : String(children ?? '');
+  const looksMultiline = /[\r\n]/.test(raw);
+  const inlineDetected = inline || (node && node.type === 'inlineCode');
+  const shouldInline = inlineDetected || !looksMultiline;
+
+  if (shouldInline && looksLikeFilePath(raw)) {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1">
+        <code
+          className={`whitespace-pre-wrap break-words rounded-md border border-gray-200 bg-gray-100 px-1.5 py-0.5 font-mono text-[0.9em] text-gray-900 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-100 ${className || ''}`}
+          {...props}
+        >
+          {children}
+        </code>
+        <FileDownloadButton filePath={raw.trim()} />
+      </span>
+    );
+  }
+
+  return <CodeBlock node={node} inline={inline} className={className} {...props}>{children}</CodeBlock>;
+};
+
 const markdownComponents = {
-  code: CodeBlock,
+  code: InlineCode,
   blockquote: ({ children }: { children?: React.ReactNode }) => (
     <blockquote className="my-2 border-l-4 border-gray-300 pl-4 italic text-gray-600 dark:border-gray-600 dark:text-gray-400">
       {children}

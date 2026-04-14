@@ -869,6 +869,45 @@ app.get('/api/projects/:projectName/files/content', authenticateToken, async (re
     }
 });
 
+// Download any file by absolute path (authenticated)
+app.get('/api/files/download', authenticateToken, async (req, res) => {
+    try {
+        const { path: filePath } = req.query;
+
+        if (!filePath || !path.isAbsolute(filePath)) {
+            return res.status(400).json({ error: 'Absolute path is required' });
+        }
+
+        const resolved = path.resolve(filePath);
+
+        try {
+            await fsPromises.access(resolved, fs.constants.R_OK);
+        } catch {
+            return res.status(404).json({ error: 'File not found or not readable' });
+        }
+
+        const stat = await fsPromises.stat(resolved);
+        if (stat.isDirectory()) {
+            return res.status(400).json({ error: 'Path is a directory' });
+        }
+
+        const filename = path.basename(resolved);
+        const mimeType = mime.lookup(resolved) || 'application/octet-stream';
+
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', stat.size);
+
+        const fileStream = fs.createReadStream(resolved);
+        fileStream.pipe(res);
+        fileStream.on('error', (err) => {
+            if (!res.headersSent) res.status(500).json({ error: 'Error reading file' });
+        });
+    } catch (error) {
+        if (!res.headersSent) res.status(500).json({ error: error.message });
+    }
+});
+
 // Save file content endpoint
 app.put('/api/projects/:projectName/file', authenticateToken, async (req, res) => {
     try {

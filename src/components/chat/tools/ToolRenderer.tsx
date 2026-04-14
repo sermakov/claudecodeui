@@ -2,7 +2,7 @@ import React, { memo, useMemo, useCallback } from 'react';
 import type { Project } from '../../../types/app';
 import type { SubagentChildTool } from '../types/types';
 import { getToolConfig } from './configs/toolConfigs';
-import { OneLineDisplay, CollapsibleDisplay, ToolDiffViewer, MarkdownContent, FileListContent, TodoListContent, TaskListContent, TextContent, QuestionAnswerContent, SubagentContainer } from './components';
+import { OneLineDisplay, CollapsibleDisplay, ToolDiffViewer, MarkdownContent, FileListContent, TodoListContent, TaskListContent, TextContent, QuestionAnswerContent, SubagentContainer, FileDownloadButton } from './components';
 
 type DiffLine = {
   type: string;
@@ -219,12 +219,17 @@ export const ToolRenderer: React.FC<ToolRendererProps> = memo(({
         })
       : undefined;
 
+    const downloadAction = mode === 'input' && ['Write', 'Edit', 'ApplyPatch'].includes(toolName) && contentProps.filePath
+      ? <FileDownloadButton filePath={contentProps.filePath} />
+      : undefined;
+
     return (
       <CollapsibleDisplay
         toolName={toolName}
         toolId={toolId}
         title={title}
         defaultOpen={defaultOpen}
+        action={downloadAction}
         onTitleClick={handleTitleClick}
         showRawParameters={mode === 'input' && showRawParameters}
         rawContent={rawToolInput}

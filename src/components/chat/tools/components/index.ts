@@ -5,3 +5,4 @@ export { CollapsibleDisplay } from './CollapsibleDisplay';
 export { SubagentContainer } from './SubagentContainer';
 export * from './ContentRenderers';
 export * from './InteractiveRenderers';
+export { FileDownloadButton } from './FileDownloadButton';
